@@ -2,6 +2,7 @@
 #define GSHHSP_H
 
 #include <QPolygonF>
+#include <QPainterPath>
 
 class gshhsP
 {
@@ -10,6 +11,8 @@ public:
 
 public:
     QPolygonF points;
+    //QPolygonF pj_points;
+    QPainterPath pj_path;
     int id;
     int n;
     int flag;

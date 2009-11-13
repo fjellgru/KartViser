@@ -18,6 +18,7 @@ void gshhsPolygons::read_gshhs_files()
     gshhsP::gshhsP polygon;
     register int lon, lat;
     register int val;
+    QPointF tmp_pkt;
     QFile gshhs_fil("C:/3party/gshhs/gshhs_c.b");
     if ( gshhs_fil.open(QIODevice::ReadOnly) )
     {
@@ -54,16 +55,82 @@ void gshhsPolygons::read_gshhs_files()
                 //if ( lon > 180000000 ) lon -=180000000;
                 gshhs_fil.read((char*)&lat,sizeof(lon));
                 lat = swabi4((unsigned int)lat);
-                polygon.points.push_back(QPointF(lon/1000000.0, lat/1000000.0));
+                tmp_pkt.setX(lon/1000000.0);
+                tmp_pkt.setY(lat/1000000.0);
+                polygon.points.push_back(tmp_pkt);
+                //polygon.pj_points.push_back(tmp_pkt);
                 //std::cout << lon << " " << lat << std::endl;
             }
             polygoner.push_back(polygon);
             polygon.points.clear();
+            //polygon.pj_points.clear();
             //qDebug("her");
             //qDebug("id: " + QString::number(polygon.id).toAscii() + " n: " + QString::number(polygon.n).toAscii());
             //break;
         }
         //qDebug("Ferdig while");
         gshhs_fil.close();
+    }
+}
+
+void gshhsPolygons::transform(projPJ from, projPJ to)
+{
+    qDebug("Transform");
+    double x = 0.;
+    double y = 0.;
+    double z = 0.;
+    double prev_x = 0.;
+    double prev_y = 0.;
+    //double z = 0.;
+    int pj_err = 0;
+    bool first_point = true;
+    double jump_limit = 1000.;
+    if ( pj_polys.size() == 0 )
+    {
+        for(QVector<gshhsP>::iterator it=polygoner.begin();
+        it != polygoner.end();
+        ++it)
+        {
+            first_point = true;
+            //QPolygonF::iterator it_pj_p=it->pj_points.begin();
+            for(QPolygonF::iterator it_p=it->points.begin();
+                it_p != it->points.end();
+                ++it_p)
+                //, ++it_pj_p)
+                {
+                    x = it_p->x()*DEG_TO_RAD;
+                    y = it_p->y()*DEG_TO_RAD;
+                    z = 0.*DEG_TO_RAD;
+                    //qDebug(QString::number(it_p->x()).toAscii());
+                    pj_err = pj_transform(from,to,1,0,&x,&y,&z);
+                    //qDebug(QString::number(x).toAscii());
+
+                    if ( first_point )
+                    {
+                        it->pj_path.moveTo(x,y);
+                        first_point = false;
+                    }
+                    else
+                    {
+                        if ( fabs(prev_x - x) > jump_limit ||
+                             fabs(prev_y - y) > jump_limit)
+                        {
+                            it->pj_path.moveTo(x,y);
+                            qDebug("her");
+                        }
+                        else
+                        {
+                            it->pj_path.lineTo(x,y);
+                        }
+                    }
+                    prev_x = x;
+                    prev_y = y;
+                    /*
+                        it_pj_p->setX(x);
+                        it_pj_p->setY(y);
+                     */
+                }
+            it->pj_path.closeSubpath();
+        }
     }
 }

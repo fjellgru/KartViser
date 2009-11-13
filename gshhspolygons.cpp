@@ -19,7 +19,7 @@ void gshhsPolygons::read_gshhs_files()
     register int lon, lat;
     register int val;
     QPointF tmp_pkt;
-    QFile gshhs_fil("C:/3party/gshhs/gshhs_c.b");
+    QFile gshhs_fil("C:/3party/gshhs/gshhs_l.b");
     if ( gshhs_fil.open(QIODevice::ReadOnly) )
     {
         while ( not gshhs_fil.atEnd() )
@@ -112,11 +112,16 @@ void gshhsPolygons::transform(projPJ from, projPJ to)
                     }
                     else
                     {
-                        if ( fabs(prev_x - x) > jump_limit ||
-                             fabs(prev_y - y) > jump_limit)
+                        if ( it->id != 4 && (
+                             fabs(prev_x - x) > jump_limit ||
+                             fabs(prev_y - y) > jump_limit) )
                         {
                             it->pj_path.moveTo(x,y);
-                            qDebug("her");
+                            /*
+                                qDebug("her" + QString::number(it->id).toAscii());
+                                qDebug("prev: " + QString::number(prev_x).toAscii() + " " + QString::number(prev_y).toAscii());
+                                qDebug("this: " + QString::number(x).toAscii() + " " + QString::number(y).toAscii());
+                                */
                         }
                         else
                         {
@@ -130,7 +135,10 @@ void gshhsPolygons::transform(projPJ from, projPJ to)
                         it_pj_p->setY(y);
                      */
                 }
-            it->pj_path.closeSubpath();
+            /*
+                if ( it->id != 4 )
+                it->pj_path.closeSubpath();
+            */
         }
     }
 }
